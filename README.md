@@ -5,10 +5,9 @@ It is assumed you have at least one Heroku application and a DataDog account. Se
 
 ## DataDog
 
-To get the DataDog relay to run alongside the log-parsing code requires using the [DataDog build pack](https://github.com/miketheman/heroku-buildpack-datadog). Set the actual buildpack to be heroku-buildpack-multi and use a .buildpack file.
+To get the DataDog relay to run alongside the log-parsing code requires using the [DataDog build pack](https://github.com/miketheman/heroku-buildpack-datadog).
 
 ```
-heroku config:add BUILDPACK_URL=https://github.com/ddollar/heroku-buildpack-multi.git
 heroku config:set HEROKU_APP_NAME=<log drain app name>
 heroku config:add DATADOG_API_KEY=<your API key>
 ```
