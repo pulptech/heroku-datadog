@@ -41,12 +41,13 @@ var logParser = new LogParser();
 
 app.post('/logs', function(request, response) {
 	response.send(200);
-	
 	if (request.get('content-type') == 'application/logplex-1') {
 
+		var hostname = request.hostname;
 		var logArray = request.body.split("\n");
-		logArray.pop();
-		logArray.forEach(logParser.parse);
+		logArray.forEach(function(log) {
+			logParser.parse(log, hostname);
+		});
 
 	} else {
 		console.log("Not Logplex");
