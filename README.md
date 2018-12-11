@@ -9,7 +9,7 @@ To get the DataDog relay to run alongside the log-parsing code requires using th
 
 ```
 heroku config:set HEROKU_APP_NAME=<log drain app name>
-heroku config:add DATADOG_API_KEY=<your API key>
+heroku config:add DD_API_KEY=<your Datadog API key>
 ```
 
 ## BasicAuth
