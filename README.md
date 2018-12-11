@@ -5,7 +5,7 @@ It is assumed you have at least one Heroku application and a DataDog account. Se
 
 ## DataDog
 
-To get the DataDog relay to run alongside the log-parsing code requires using the [DataDog build pack](https://github.com/miketheman/heroku-buildpack-datadog).
+To get the DataDog relay to run alongside the log-parsing code requires using the [DataDog build pack](https://github.com/DataDog/heroku-buildpack-datadog).
 
 ```
 heroku config:set HEROKU_APP_NAME=<log drain app name>
