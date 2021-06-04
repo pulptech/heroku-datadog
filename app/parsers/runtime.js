@@ -24,7 +24,7 @@ module.exports = (dogStatsD, log, hostname) => {
     if (matches) {
       value = matches[1]
       instance = log.match(/source=([a-zA-Z0-9_\.]+)/)
-      if (instance) {npm
+      if (instance) {
         const tags = createDatadogTags({
           hostname,
           instance: instance[1].toLowerCase(),
