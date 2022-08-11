@@ -10,6 +10,8 @@ const herokuService = require('./services/heroku-service')
 const TEN_MINUTES_IN_SECONDS = 10 * 60
 
 module.exports = ({ log, redis }) => {
+  console.log('timeoutLogParserHandler', log)
+
   const timeoutMarkRegex = /H12/
   const logDateTimeRegex = /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}\+[0-9]{2}:[0-9]{2}/
 
