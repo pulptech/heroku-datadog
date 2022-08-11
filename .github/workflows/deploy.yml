@@ -1,0 +1,29 @@
+name: deploy
+on:
+  push:
+    branches:
+      - master
+      - feature/timeout-parser-handler
+jobs:
+  push_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Set heroku app
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/master" ]; then
+            echo "HEROKU_APP=heroku-log-drain-metric-parser" >> $GITHUB_ENV
+          elif [ "$GITHUB_REF" = "refs/heads/feature/timeout-parser-handler" ]; then
+            echo "HEROKU_APP=heroku-log-parser-sandbox" >> $GITHUB_ENV
+          else
+            echo "Invalid branch!"
+            exit 1
+          fi
+      - name: Deploy to heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ env.HEROKU_APP }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          dontautocreate: true
