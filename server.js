@@ -1,5 +1,10 @@
 const express = require('express');
 const auth = require('basic-auth');
+const Redis = require('ioredis');
+
+const Parser = require("./app/Parser");
+const { redisUrl } = require('./configuration/index');
+const timeoutLogParserHandler = require('./app/timeout-handler')
 
 const app = express();
 
@@ -30,8 +35,8 @@ app.get('/', function(request, response) {
   response.send('OK');
 });
 
-const Parser = require("./app/Parser");
 const parser = new Parser();
+const redis = new Redis(redisUrl);
 
 app.post('/logs', function(request, response) {
   response.sendStatus(200);
@@ -42,6 +47,12 @@ app.post('/logs', function(request, response) {
     logArray.forEach(function(log) {
       parser.parse(log, hostname);
     });
+
+    return logArray.reduce((logParserTimeoutHandler, log) => {
+      return logParserTimeoutHandler.then(() => {
+        timeoutLogParserHandler({ log, redis })
+      })
+    }, Promise.resolve())
 
   } else {
     console.log('Not Logplex');

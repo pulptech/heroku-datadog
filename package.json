@@ -6,10 +6,13 @@
     "url": "https://github.com/TimmyCarbone/heroku-datadog"
   },
   "dependencies": {
-    "express": "4.x",
-    "node-dogstatsd": "0.0.x",
+    "axios": "^0.27.2",
     "basic-auth": "1.x",
-    "file-system": "2.2.2"
+    "express": "4.x",
+    "file-system": "2.2.2",
+    "ioredis": "^5.2.2",
+    "moment": "^2.29.4",
+    "node-dogstatsd": "0.0.x"
   },
   "engines": {
     "node": "8.0",
