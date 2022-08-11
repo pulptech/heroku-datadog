@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-const { herokuApiUrl, herokuAppNameManaged, herokuToken } = require('/configuration/index')
+const { herokuApiUrl, herokuAppNameManaged, herokuToken } = require('../../configuration/index')
 
 module.exports = {
   restartDynos: () => {
