@@ -77,6 +77,7 @@ function generateLastDynosRestartDateTimeRedisKey() {
 }
 
 function incrementTimeoutCounters({ timeoutsCountsPerMinute }, { redis }) {
+  console.log('timeoutsCountsPerMinute', timeoutsCountsPerMinute)
   return Object.entries(timeoutsCountsPerMinute).reduce((redisPromise, [minute, countForBatchLog]) => {
     const timeoutCounterRedisKey = generateTimeoutsCounterRedisKey({ minute })
 
@@ -110,12 +111,16 @@ function computeTotalTimeoutsOnInterval({ redis }) {
       return redisPromise.then(() => {
         return redis.get(timeoutCounterRedisKey)
           .then(totalTimeoutOnMinute => {
+            console.log('totalTimeoutOnMinute', totalTimeoutOnMinute, 'minute', logMinuteCounterToGet)
             if(totalTimeoutOnMinute) {
               totalTimeoutsOnInterval += parseInt(totalTimeoutOnMinute)
             }
           })
       })
     }, Promise.resolve())
+    .then(() => {
+      return totalTimeoutsOnInterval
+    })
 }
 
 function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) {
