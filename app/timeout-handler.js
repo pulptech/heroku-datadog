@@ -73,6 +73,7 @@ function computeTotalTimeoutsOnInterval({ logDateTime }, { redis }) {
 }
 
 function handleTimeoutsAmountOnInterval({ logDateTime, totalTimeoutsOnInterval }, { redis }) {
+  console.log('totalTimeoutsOnInterval', totalTimeoutsOnInterval, 'amountOfAcceptedTimeoutsOnInterval', amountOfAcceptedTimeoutsOnInterval)
   const totalTimeoutsOnIntervalIsOverAcceptableAmount = totalTimeoutsOnInterval >= amountOfAcceptedTimeoutsOnInterval
   if( !totalTimeoutsOnIntervalIsOverAcceptableAmount) {
     return
@@ -84,7 +85,9 @@ function handleTimeoutsAmountOnInterval({ logDateTime, totalTimeoutsOnInterval }
       const dateTimeWithDelayAfterRestart = moment(lastDynosRestartDateTime).add(delayInSecondsToTriggerDynosRestart, 'seconds')
       const lastRestartHasPassedAcceptableDelay = logDateTime.isAfter(dateTimeWithDelayAfterRestart)
 
-      if (!lastRestartHasPassedAcceptableDelay) {
+      console.log('dateTimeWithDelayAfterRestart', dateTimeWithDelayAfterRestart)
+      console.log('lastRestartHasPassedAcceptableDelay', lastRestartHasPassedAcceptableDelay)
+      if (!dateTimeWithDelayAfterRestart || !lastRestartHasPassedAcceptableDelay) {
         return
       }
 
