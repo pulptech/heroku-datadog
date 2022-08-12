@@ -11,11 +11,9 @@ const TEN_MINUTES_IN_SECONDS = 10 * 60
 const TIMEOUT_REGEX = /H12/
 
 module.exports = ({ logArray, redis }) => {
-  return computeTimeoutsPerMinute({ logArray })
-    .then(timeoutsCountsForLogs => incrementTimeoutCounters(
-      { timeoutsCountsForLogs },
-      { redis },
-    ))
+  const timeoutsCountsPermMinute = computeTimeoutsPerMinute({ logArray })
+
+  return incrementTimeoutCounters({ timeoutsCountsPermMinute }, { redis })
     .then(() => computeTotalTimeoutsOnInterval({ redis }))
     .then(totalTimeoutsOnInterval => handleTimeoutsAmountOnInterval(
       { totalTimeoutsOnInterval },
@@ -24,18 +22,18 @@ module.exports = ({ logArray, redis }) => {
 }
 
 function computeTimeoutsPerMinute({ logArray }) {
-  return logArray.reduce((timeoutsCountsForLogs, log) => {
+  return logArray.reduce((timeoutsCountsPermMinute, log) => {
     const logMatchesTimeout = log.match(TIMEOUT_REGEX)
 
     if (logMatchesTimeout) {
       const logDateTime = moment(log.split(' ')[0])
       const logMinute = logDateTime.minute()
 
-      const newCountValue  = timeoutsCountsForLogs[logMinute] ? timeoutsCountsForLogs[logMinute] + 1 : 1
-      timeoutsCountsForLogs[logMinute] = newCountValue
+      const newCountValue  = timeoutsCountsPermMinute[logMinute] ? timeoutsCountsPermMinute[logMinute] + 1 : 1
+      timeoutsCountsPermMinute[logMinute] = newCountValue
     }
 
-    return timeoutsCountsForLogs
+    return timeoutsCountsPermMinute
   }, {})
 }
 
@@ -47,8 +45,8 @@ function generateLastDynosRestartDateTimeRedisKey() {
   return 'timeouts:last_dyno_restart_date_time'
 }
 
-function incrementTimeoutCounters({ timeoutsCountsForLogs }, { redis }) {
-  return Object.entries(timeoutsCountsForLogs).reduce((redisPromise, [minute, countForBatchLog]) => {
+function incrementTimeoutCounters({ timeoutsCountsPermMinute }, { redis }) {
+  return Object.entries(timeoutsCountsPermMinute).reduce((redisPromise, [minute, countForBatchLog]) => {
     const timeoutCounterRedisKey = generateTimeoutsCounterRedisKey({ minute })
 
     return redisPromise.then(() => {
@@ -75,7 +73,8 @@ function computeTotalTimeoutsOnInterval({ redis }) {
   return Array(intervalInMinutesToCalculateTimeoutsOn)
     .fill(null)
     .reduce((redisPromise, _element, index) => {
-      const logMinuteCounterToGet = currentLogMinute - index
+      const minuteIsBeginningOfHour = currentLogMinute === 0
+      const logMinuteCounterToGet = minuteIsBeginningOfHour? 59 : currentLogMinute - index
       const timeoutCounterRedisKey = generateTimeoutsCounterRedisKey({ minute: logMinuteCounterToGet })
 
       return redisPromise.then(() => {
