@@ -39,6 +39,9 @@ module.exports = function ({ redisSingleton }) {
 
 function parseLogBatches({ logsToParseQueue }, { redis }) {
   console.log('logsToParseQueue', logsToParseQueue)
+  if (!logsToParseQueue.length) {
+    return
+  }
   const timeoutsCountsPerMinute = computeTimeoutsPerMinute({ logArray: logsToParseQueue })
 
   return incrementTimeoutCounters({ timeoutsCountsPerMinute }, { redis })
@@ -51,7 +54,6 @@ function parseLogBatches({ logsToParseQueue }, { redis }) {
 
 function computeTimeoutsPerMinute({ logArray }) {
   return logArray.reduce((timeoutsCountsPerMinute, log) => {
-    console.log('log', log)
     const logMatchesTimeout = log.match(TIMEOUT_REGEX)
 
     if (logMatchesTimeout) {
@@ -117,6 +119,7 @@ function computeTotalTimeoutsOnInterval({ redis }) {
 }
 
 function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) {
+  console.log('handleTimeoutsAmountOnInterval', totalTimeoutsOnInterval)
   const totalTimeoutsOnIntervalIsOverAcceptableAmount = totalTimeoutsOnInterval >= amountOfAcceptedTimeoutsOnInterval
   if( !totalTimeoutsOnIntervalIsOverAcceptableAmount) {
     return
