@@ -60,7 +60,9 @@ function computeTotalTimeoutsOnInterval({ logDateTime }, { redis }) {
       return redisPromise.then(() => {
         return redis.get(timeoutCounterRedisKey)
           .then(totalTimeoutOnMinute => {
-            totalTimeoutsOnInterval += totalTimeoutOnMinute
+            if(totalTimeoutOnMinute) {
+              totalTimeoutsOnInterval += parseInt(totalTimeoutOnMinute)
+            }
           })
       })
     }, Promise.resolve())
