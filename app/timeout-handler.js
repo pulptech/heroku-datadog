@@ -1,4 +1,5 @@
 const moment = require('moment')
+const winston = require('winston')
 
 const {
   intervalInMinutesToCalculateTimeoutsOn,
@@ -9,10 +10,35 @@ const herokuService = require('./services/heroku-service')
 
 const TEN_MINUTES_IN_SECONDS = 10 * 60
 const TWO_HOURS_IN_SECONDS = 2 * 60 * 60
+const FIVE_SECONDS = 5000
+
 const TIMEOUT_REGEX = /code=H12/
 
-module.exports = ({ logArray, redis }) => {
-  const timeoutsCountsPerMinute = computeTimeoutsPerMinute({ logArray })
+module.exports = ({ redisSingleton }) => {
+  const redis = redisSingleton
+
+  let logsToParseQueue = []
+  let interval = null
+
+  return {
+    startHandler: () => {
+      interval = setInterval(() => {
+        const logsBatchBeforeParse = [...logsToParseQueue]
+        parseLogBatches({ logsToParseQueue: logsBatchBeforeParse }, { redis })
+          .then(() => {
+            logsToParseQueue = logsToParseQueue.filter(log => !logsBatchBeforeParse.includes(log))
+          })
+          .catch(winston.error)
+      }, FIVE_SECONDS)
+    },
+    addNewLogBatch: ({ logArray }) => {
+      logsToParseQueue.push(logArray)
+    },
+  }
+}
+
+function parseLogBatches({ logsToParseQueue }, { redis }) {
+  const timeoutsCountsPerMinute = computeTimeoutsPerMinute({ logArray: logsToParseQueue })
 
   return incrementTimeoutCounters({ timeoutsCountsPerMinute }, { redis })
     .then(() => computeTotalTimeoutsOnInterval({ redis }))
@@ -57,11 +83,9 @@ function incrementTimeoutCounters({ timeoutsCountsPerMinute }, { redis }) {
             return redis.set(timeoutCounterRedisKey, countForBatchLog, 'EX', TEN_MINUTES_IN_SECONDS)
           }
           const newValue = oldCountValue + countForBatchLog
-          console.log('newValue', newValue)
           return redis.set(timeoutCounterRedisKey, newValue)
         })
         .then(newCounterValue => {
-          console.log('incrementTimeoutCounters', timeoutCounterRedisKey, newCounterValue)
           return Promise.resolve()
         })
     })
@@ -88,18 +112,15 @@ function computeTotalTimeoutsOnInterval({ redis }) {
           })
       })
     }, Promise.resolve())
-    .then(() => {
-      console.log('totalTimeoutsOnInterval', totalTimeoutsOnInterval)
-      return totalTimeoutsOnInterval
-    })
 }
 
 function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) {
-  console.log('totalTimeoutsOnInterval', totalTimeoutsOnInterval, 'amountOfAcceptedTimeoutsOnInterval', amountOfAcceptedTimeoutsOnInterval)
   const totalTimeoutsOnIntervalIsOverAcceptableAmount = totalTimeoutsOnInterval >= amountOfAcceptedTimeoutsOnInterval
   if( !totalTimeoutsOnIntervalIsOverAcceptableAmount) {
     return
   }
+
+  winston.info(`New timeout amount over accepted quantity detected ${totalTimeoutsOnInterval} one the last ${intervalInMinutesToCalculateTimeoutsOn} minutes`)
 
   const lastDynosRestartDateTimeRedisKey = generateLastDynosRestartDateTimeRedisKey()
   return redis.get(lastDynosRestartDateTimeRedisKey)
@@ -107,14 +128,10 @@ function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) 
       const dateTimeWithDelayAfterRestart = moment(lastDynosRestartDateTime).add(delayInSecondsToTriggerDynosRestart, 'seconds')
       const lastRestartHasPassedAcceptableDelay = moment().isAfter(dateTimeWithDelayAfterRestart)
 
-      console.log('lastDynosRestartDateTime', lastDynosRestartDateTime)
-      console.log('dateTimeWithDelayAfterRestart', dateTimeWithDelayAfterRestart)
-      console.log('lastRestartHasPassedAcceptableDelay', lastRestartHasPassedAcceptableDelay)
       if (lastDynosRestartDateTime && !lastRestartHasPassedAcceptableDelay) {
         return
       }
 
-      console.log('restart dynos')
       return herokuService.restartDynos()
         .then(() => {
           const newDynosRestartDateTime = moment().toISOString()

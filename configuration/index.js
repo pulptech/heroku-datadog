@@ -8,4 +8,6 @@ module.exports = {
   herokuToken: process.env.HEROKU_TOKEN,
 
   redisUrl: process.env.REDIS_URL,
+
+  appLogLevel: process.env.APP_LOG_LEVEL || 'info',
 }
