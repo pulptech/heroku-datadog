@@ -8,6 +8,7 @@ const {
 const herokuService = require('./services/heroku-service')
 
 const TEN_MINUTES_IN_SECONDS = 10 * 60
+const TWO_HOURS_IN_SECONDS = 2 * 60 * 60
 const TIMEOUT_REGEX = /code=H12/
 
 module.exports = ({ logArray, redis }) => {
@@ -113,10 +114,11 @@ function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) 
         return
       }
 
-      console.log('restart dynos')
-      const lastDynosRestartDateTimeRedisKey = generateLastDynosRestartDateTimeRedisKey()
       const newDynosRestartDateTime = moment().toISOString()
-      return redis.set(lastDynosRestartDateTimeRedisKey, newDynosRestartDateTime)
-      return herokuService.restartDynos()
+      return redis.set(lastDynosRestartDateTimeRedisKey, newDynosRestartDateTime, 'EX', TWO_HOURS_IN_SECONDS)
+        .then(() => {
+          console.log('restart dynos')
+          return herokuService.restartDynos()
+        })
     })
 }
