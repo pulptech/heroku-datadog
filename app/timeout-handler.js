@@ -10,8 +10,6 @@ const herokuService = require('./services/heroku-service')
 const TEN_MINUTES_IN_SECONDS = 10 * 60
 
 module.exports = ({ log, redis }) => {
-  console.log('timeoutLogParserHandler', log)
-
   const timeoutMarkRegex = /H12/
 
   const logMatchesTimeout = log.match(timeoutMarkRegex)
@@ -42,8 +40,9 @@ function incrementTimeoutCounter({ logDateTime }, { redis }) {
   return redis.multi()
     .incr(timeoutCounterRedisKey)
     .expire(timeoutCounterRedisKey, TEN_MINUTES_IN_SECONDS)
-    .exec(() => {
-      return
+    .exec(([incrementResult, _expireResult]) => {
+      console.log('incrementTimeoutCounter', incrementResult[1])
+      return Promise.resolve()
     })
 }
 
@@ -64,6 +63,10 @@ function computeTotalTimeoutsOnInterval({ logDateTime }, { redis }) {
           })
       })
     }, Promise.resolve())
+    .then(() => {
+      console.log('totalTimeoutsOnInterval', totalTimeoutsOnInterval)
+      return totalTimeoutsOnInterval
+    })
 }
 
 function handleTimeoutsAmountOnInterval({ logDateTime, totalTimeoutsOnInterval }, { redis }) {
@@ -82,6 +85,7 @@ function handleTimeoutsAmountOnInterval({ logDateTime, totalTimeoutsOnInterval }
         return
       }
 
+      console.log('restart dynos')
       const lastDynosRestartDateTimeRedisKey = generateLastDynosRestartDateTimeRedisKey()
       const newDynosRestartDateTime = moment().toISOString()
       return redis.set(lastDynosRestartDateTimeRedisKey, newDynosRestartDateTime)

@@ -14,6 +14,13 @@ module.exports = {
         baseURL: herokuApiUrl,
         headers,
       })
-      .then(result => result.data)
+      .then(result => {
+        console.log('restartDynos result', result.data)
+        return result.data
+      })
+      .catch(error => {
+        console.log('restartDynos error', error)
+        throw error
+      })
   }
 }
