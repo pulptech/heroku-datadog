@@ -40,7 +40,8 @@ function incrementTimeoutCounter({ logDateTime }, { redis }) {
   return redis.multi()
     .incr(timeoutCounterRedisKey)
     .expire(timeoutCounterRedisKey, TEN_MINUTES_IN_SECONDS)
-    .exec(([incrementResult, _expireResult]) => {
+    .exec()
+    .then(([incrementResult, _expireResult]) => {
       console.log('incrementTimeoutCounter', incrementResult[1])
       return Promise.resolve()
     })
