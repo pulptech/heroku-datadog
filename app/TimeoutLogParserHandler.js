@@ -14,7 +14,7 @@ const FIVE_SECONDS = 5000
 
 const TIMEOUT_REGEX = /code=H12/
 
-module.exports = ({ redisSingleton }) => {
+module.exports = function ({ redisSingleton }) {
   const redis = redisSingleton
 
   let logsToParseQueue = []

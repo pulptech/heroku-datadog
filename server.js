@@ -9,7 +9,7 @@ const winston = require('winston');
 
 const Parser = require("./app/Parser");
 const { redisUrl } = require('./configuration/index');
-const TimeoutLogParserHandler = require('./app/timeout-handler');
+const TimeoutLogParserHandler = require('./app/TimeoutLogParserHandler');
 const loggerConfiguration = require('./configuration/logger');
 
 loggerConfiguration.configureLogger();
