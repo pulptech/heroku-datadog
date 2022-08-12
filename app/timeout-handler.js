@@ -8,20 +8,35 @@ const {
 const herokuService = require('./services/heroku-service')
 
 const TEN_MINUTES_IN_SECONDS = 10 * 60
+const TIMEOUT_REGEX = /H12/
 
-module.exports = ({ log, redis }) => {
-  const timeoutMarkRegex = /H12/
+module.exports = ({ logArray, redis }) => {
+  return computeTimeoutsPerMinute({ logArray })
+    .then(timeoutsCountsForLogs => incrementTimeoutCounters(
+      { timeoutsCountsForLogs },
+      { redis },
+    ))
+    .then(() => computeTotalTimeoutsOnInterval({ redis }))
+    .then(totalTimeoutsOnInterval => handleTimeoutsAmountOnInterval(
+      { totalTimeoutsOnInterval },
+      { redis },
+    ))
+}
 
-  const logMatchesTimeout = log.match(timeoutMarkRegex)
-  if(logMatchesTimeout) {
-    const logDateTime = moment(log.split(' ')[0])
-    return incrementTimeoutCounter({ logDateTime }, { redis })
-      .then(() => computeTotalTimeoutsOnInterval({ logDateTime }, { redis }))
-      .then(totalTimeoutsOnInterval => handleTimeoutsAmountOnInterval(
-        { logDateTime, totalTimeoutsOnInterval },
-        { redis },
-      ))
-  }
+function computeTimeoutsPerMinute({ logArray }) {
+  return logArray.reduce((timeoutsCountsForLogs, log) => {
+    const logMatchesTimeout = log.match(TIMEOUT_REGEX)
+
+    if (logMatchesTimeout) {
+      const logDateTime = moment(log.split(' ')[0])
+      const logMinute = logDateTime.minute()
+
+      const newCountValue  = timeoutsCountsForLogs[logMinute] ? timeoutsCountsForLogs[logMinute] + 1 : 1
+      timeoutsCountsForLogs[logMinute] = newCountValue
+    }
+
+    return timeoutsCountsForLogs
+  }, {})
 }
 
 function generateTimeoutsCounterRedisKey({ minute }) {
@@ -32,23 +47,29 @@ function generateLastDynosRestartDateTimeRedisKey() {
   return 'timeouts:last_dyno_restart_date_time'
 }
 
-function incrementTimeoutCounter({ logDateTime }, { redis }) {
-  const logMinute = logDateTime.minute()
+function incrementTimeoutCounters({ timeoutsCountsForLogs }, { redis }) {
+  return Object.entries(timeoutsCountsForLogs).reduce((redisPromise, [minute, countForBatchLog]) => {
+    const timeoutCounterRedisKey = generateTimeoutsCounterRedisKey({ minute })
 
-  const timeoutCounterRedisKey = generateTimeoutsCounterRedisKey({ minute: logMinute })
-
-  return redis.multi()
-    .incr(timeoutCounterRedisKey)
-    .expire(timeoutCounterRedisKey, TEN_MINUTES_IN_SECONDS)
-    .exec()
-    .then(([incrementResult, _expireResult]) => {
-      console.log('incrementTimeoutCounter', incrementResult[1])
-      return Promise.resolve()
+    return redisPromise.then(() => {
+      return redis.get(timeoutCounterRedisKey)
+        .then(oldCountValue => {
+          if(!oldCountValue) {
+            return redis.set(timeoutCounterRedisKey, countForBatchLog, 'EX', TEN_MINUTES_IN_SECONDS)
+          }
+          const newValue = oldCountValue + countForBatchLog
+          return redis.set(timeoutCounterRedisKey, newValue)
+        })
+        .then(newCounterValue => {
+          console.log('incrementTimeoutCounters', timeoutCounterRedisKey, newCounterValue)
+          return Promise.resolve()
+        })
     })
+  }, Promise.resolve())
 }
 
-function computeTotalTimeoutsOnInterval({ logDateTime }, { redis }) {
-  const currentLogMinute = logDateTime.minute()
+function computeTotalTimeoutsOnInterval({ redis }) {
+  const currentLogMinute = moment().minute()
   let totalTimeoutsOnInterval = 0
 
   return Array(intervalInMinutesToCalculateTimeoutsOn)
@@ -72,7 +93,7 @@ function computeTotalTimeoutsOnInterval({ logDateTime }, { redis }) {
     })
 }
 
-function handleTimeoutsAmountOnInterval({ logDateTime, totalTimeoutsOnInterval }, { redis }) {
+function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) {
   console.log('totalTimeoutsOnInterval', totalTimeoutsOnInterval, 'amountOfAcceptedTimeoutsOnInterval', amountOfAcceptedTimeoutsOnInterval)
   const totalTimeoutsOnIntervalIsOverAcceptableAmount = totalTimeoutsOnInterval >= amountOfAcceptedTimeoutsOnInterval
   if( !totalTimeoutsOnIntervalIsOverAcceptableAmount) {
@@ -83,8 +104,9 @@ function handleTimeoutsAmountOnInterval({ logDateTime, totalTimeoutsOnInterval }
   return redis.get(lastDynosRestartDateTimeRedisKey)
     .then(lastDynosRestartDateTime => {
       const dateTimeWithDelayAfterRestart = moment(lastDynosRestartDateTime).add(delayInSecondsToTriggerDynosRestart, 'seconds')
-      const lastRestartHasPassedAcceptableDelay = logDateTime.isAfter(dateTimeWithDelayAfterRestart)
+      const lastRestartHasPassedAcceptableDelay = moment().isAfter(dateTimeWithDelayAfterRestart)
 
+      console.log('lastDynosRestartDateTime', lastDynosRestartDateTime)
       console.log('dateTimeWithDelayAfterRestart', dateTimeWithDelayAfterRestart)
       console.log('lastRestartHasPassedAcceptableDelay', lastRestartHasPassedAcceptableDelay)
       if (!lastDynosRestartDateTime || !lastRestartHasPassedAcceptableDelay) {

@@ -52,12 +52,7 @@ app.post('/logs', function(request, response) {
       parser.parse(log, hostname);
     });
 
-    return logArray.reduce((logParserTimeoutHandler, log) => {
-      return logParserTimeoutHandler.then(() => {
-        timeoutLogParserHandler({ log, redis })
-      })
-    }, Promise.resolve())
-
+    return timeoutLogParserHandler({ logArray, redis })
   } else {
     console.log('Not Logplex');
   }
