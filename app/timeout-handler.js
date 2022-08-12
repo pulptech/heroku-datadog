@@ -114,11 +114,11 @@ function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) 
         return
       }
 
-      const newDynosRestartDateTime = moment().toISOString()
-      return redis.set(lastDynosRestartDateTimeRedisKey, newDynosRestartDateTime, 'EX', TWO_HOURS_IN_SECONDS)
+      console.log('restart dynos')
+      return herokuService.restartDynos()
         .then(() => {
-          console.log('restart dynos')
-          return herokuService.restartDynos()
+          const newDynosRestartDateTime = moment().toISOString()
+          return redis.set(lastDynosRestartDateTimeRedisKey, newDynosRestartDateTime, 'EX', TWO_HOURS_IN_SECONDS)
         })
     })
 }
