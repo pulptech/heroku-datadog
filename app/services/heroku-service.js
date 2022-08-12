@@ -9,6 +9,7 @@ module.exports = {
 
     const headers = {
       Authorization: `Bearer ${herokuToken}`,
+      Accept: 'application/vnd.heroku+json; version=3'
     }
     const path = `/apps/${herokuAppNameManaged}/dynos`
     console.log('axios', axios)
