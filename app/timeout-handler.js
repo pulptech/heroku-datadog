@@ -87,7 +87,7 @@ function handleTimeoutsAmountOnInterval({ logDateTime, totalTimeoutsOnInterval }
 
       console.log('dateTimeWithDelayAfterRestart', dateTimeWithDelayAfterRestart)
       console.log('lastRestartHasPassedAcceptableDelay', lastRestartHasPassedAcceptableDelay)
-      if (!dateTimeWithDelayAfterRestart || !lastRestartHasPassedAcceptableDelay) {
+      if (!lastDynosRestartDateTime || !lastRestartHasPassedAcceptableDelay) {
         return
       }
 
