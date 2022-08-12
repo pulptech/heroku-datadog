@@ -15,9 +15,5 @@
     "moment": "^2.29.4",
     "node-dogstatsd": "0.0.x",
     "path": "^0.12.7"
-  },
-  "engines": {
-    "node": "8.0",
-    "npm": "6.1.0"
   }
 }
