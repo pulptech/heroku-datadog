@@ -41,8 +41,10 @@ function incrementTimeoutCounter({ logDateTime }, { redis }) {
 
   return redis.multi()
     .incr(timeoutCounterRedisKey)
-    .expire(TEN_MINUTES_IN_SECONDS)
-    .exec()
+    .expire(timeoutCounterRedisKey, TEN_MINUTES_IN_SECONDS)
+    .exec(() => {
+      return
+    })
 }
 
 function computeTotalTimeoutsOnInterval({ logDateTime }, { redis }) {
