@@ -38,7 +38,6 @@ module.exports = function ({ redisSingleton }) {
 }
 
 function parseLogBatches({ logsToParseQueue }, { redis }) {
-  console.log('logsToParseQueue', logsToParseQueue)
   if (!logsToParseQueue.length) {
     return Promise.resolve()
   }
@@ -77,7 +76,6 @@ function generateLastDynosRestartDateTimeRedisKey() {
 }
 
 function incrementTimeoutCounters({ timeoutsCountsPerMinute }, { redis }) {
-  console.log('timeoutsCountsPerMinute', timeoutsCountsPerMinute)
   return Object.entries(timeoutsCountsPerMinute).reduce((redisPromise, [minute, countForBatchLog]) => {
     const timeoutCounterRedisKey = generateTimeoutsCounterRedisKey({ minute })
 
@@ -111,7 +109,6 @@ function computeTotalTimeoutsOnInterval({ redis }) {
       return redisPromise.then(() => {
         return redis.get(timeoutCounterRedisKey)
           .then(totalTimeoutOnMinute => {
-            console.log('totalTimeoutOnMinute', totalTimeoutOnMinute, 'minute', logMinuteCounterToGet)
             if(totalTimeoutOnMinute) {
               totalTimeoutsOnInterval += parseInt(totalTimeoutOnMinute)
             }
@@ -124,7 +121,6 @@ function computeTotalTimeoutsOnInterval({ redis }) {
 }
 
 function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) {
-  console.log('handleTimeoutsAmountOnInterval', totalTimeoutsOnInterval)
   const totalTimeoutsOnIntervalIsOverAcceptableAmount = totalTimeoutsOnInterval >= amountOfAcceptedTimeoutsOnInterval
   if( !totalTimeoutsOnIntervalIsOverAcceptableAmount) {
     return
