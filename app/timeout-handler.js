@@ -13,11 +13,10 @@ module.exports = ({ log, redis }) => {
   console.log('timeoutLogParserHandler', log)
 
   const timeoutMarkRegex = /H12/
-  const logDateTimeRegex = /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}\+[0-9]{2}:[0-9]{2}/
 
   const logMatchesTimeout = log.match(timeoutMarkRegex)
   if(logMatchesTimeout) {
-    const logDateTime = moment(log.match(logDateTimeRegex))
+    const logDateTime = moment(log.split(' ')[0])
     return incrementTimeoutCounter({ logDateTime }, { redis })
       .then(() => computeTotalTimeoutsOnInterval({ logDateTime }, { redis }))
       .then(totalTimeoutsOnInterval => handleTimeoutsAmountOnInterval(
@@ -80,6 +79,10 @@ function handleTimeoutsAmountOnInterval({ logDateTime, totalTimeoutsOnInterval }
       if (!lastRestartHasPassedAcceptableDelay) {
         return
       }
+
+      const lastDynosRestartDateTimeRedisKey = generateLastDynosRestartDateTimeRedisKey()
+      const newDynosRestartDateTime = moment().toISOString()
+      return redis.set(lastDynosRestartDateTimeRedisKey, newDynosRestartDateTime)
       return herokuService.restartDynos()
     })
 }
