@@ -1,10 +1,14 @@
 const express = require('express');
 const auth = require('basic-auth');
 const Redis = require('ioredis');
+const path = require('path');
+require('dotenv').config({
+  path: path.join(__dirname, '.env'),
+});
 
 const Parser = require("./app/Parser");
 const { redisUrl } = require('./configuration/index');
-const timeoutLogParserHandler = require('./app/timeout-handler')
+const timeoutLogParserHandler = require('./app/timeout-handler');
 
 const app = express();
 
