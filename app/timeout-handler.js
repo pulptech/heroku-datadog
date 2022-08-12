@@ -109,7 +109,7 @@ function handleTimeoutsAmountOnInterval({ totalTimeoutsOnInterval }, { redis }) 
       console.log('lastDynosRestartDateTime', lastDynosRestartDateTime)
       console.log('dateTimeWithDelayAfterRestart', dateTimeWithDelayAfterRestart)
       console.log('lastRestartHasPassedAcceptableDelay', lastRestartHasPassedAcceptableDelay)
-      if (!lastDynosRestartDateTime || !lastRestartHasPassedAcceptableDelay) {
+      if (lastDynosRestartDateTime && !lastRestartHasPassedAcceptableDelay) {
         return
       }
 
