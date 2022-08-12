@@ -40,7 +40,7 @@ module.exports = function ({ redisSingleton }) {
 function parseLogBatches({ logsToParseQueue }, { redis }) {
   console.log('logsToParseQueue', logsToParseQueue)
   if (!logsToParseQueue.length) {
-    return
+    return Promise.resolve()
   }
   const timeoutsCountsPerMinute = computeTimeoutsPerMinute({ logArray: logsToParseQueue })
 
