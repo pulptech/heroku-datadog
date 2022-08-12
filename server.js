@@ -1,5 +1,18 @@
 const express = require('express');
 const auth = require('basic-auth');
+const Redis = require('ioredis');
+const path = require('path');
+require('dotenv').config({
+  path: path.join(__dirname, '.env'),
+});
+const winston = require('winston');
+
+const Parser = require("./app/Parser");
+const { redisUrl } = require('./configuration/index');
+const TimeoutLogParserHandler = require('./app/TimeoutLogParserHandler');
+const loggerConfiguration = require('./configuration/logger');
+
+loggerConfiguration.configureLogger();
 
 const app = express();
 
@@ -26,12 +39,14 @@ app.use(function(req, res, next) {
   });
 });
 
+const redisSingleton = new Redis(redisUrl);
+const parser = new Parser();
+const timeoutLogParserHandler = new TimeoutLogParserHandler({ redisSingleton });
+timeoutLogParserHandler.startHandler();
+
 app.get('/', function(request, response) {
   response.send('OK');
 });
-
-const Parser = require("./app/Parser");
-const parser = new Parser();
 
 app.post('/logs', function(request, response) {
   response.sendStatus(200);
@@ -43,13 +58,14 @@ app.post('/logs', function(request, response) {
       parser.parse(log, hostname);
     });
 
+     timeoutLogParserHandler.addNewLogBatch({ logArray })
   } else {
-    console.log('Not Logplex');
+    winston.info('Not Logplex');
   }
 });
 
-console.log('Starting the log monitoring server');
+winston.info('Starting the log monitoring server');
 const port = process.env.PORT || 3000;
 app.listen(port, function() {
-  console.log('Listening on port: ' + port);
+  winston.info('Listening on port: ' + port);
 });
