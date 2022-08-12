@@ -32,7 +32,7 @@ module.exports = function ({ redisSingleton }) {
       }, FIVE_SECONDS)
     },
     addNewLogBatch: ({ logArray }) => {
-      logsToParseQueue.push(logArray)
+      logsToParseQueue = [...logsToParseQueue, ...logArray]
     },
   }
 }
