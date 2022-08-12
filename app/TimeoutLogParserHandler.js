@@ -24,7 +24,7 @@ module.exports = function ({ redisSingleton }) {
     startHandler: () => {
       interval = setInterval(() => {
         const logsBatchBeforeParse = [...logsToParseQueue]
-        parseLogBatches({ logsToParseQueue: logsBatchBeforeParse }, { redis })
+        return parseLogBatches({ logsToParseQueue: logsBatchBeforeParse }, { redis })
           .then(() => {
             logsToParseQueue = logsToParseQueue.filter(log => !logsBatchBeforeParse.includes(log))
           })
@@ -38,6 +38,7 @@ module.exports = function ({ redisSingleton }) {
 }
 
 function parseLogBatches({ logsToParseQueue }, { redis }) {
+  console.log('logsToParseQueue', logsToParseQueue)
   const timeoutsCountsPerMinute = computeTimeoutsPerMinute({ logArray: logsToParseQueue })
 
   return incrementTimeoutCounters({ timeoutsCountsPerMinute }, { redis })
@@ -50,6 +51,7 @@ function parseLogBatches({ logsToParseQueue }, { redis }) {
 
 function computeTimeoutsPerMinute({ logArray }) {
   return logArray.reduce((timeoutsCountsPerMinute, log) => {
+    console.log('log', log)
     const logMatchesTimeout = log.match(TIMEOUT_REGEX)
 
     if (logMatchesTimeout) {
