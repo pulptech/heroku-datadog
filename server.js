@@ -68,13 +68,19 @@ app.post('/logs', function(request, response) {
 
 app.post('/monitors', function(request, response) {
   response.sendStatus(200);
-  const eventTitle = request && request.body && request.body.title
-  const IS_A_REBOOT_REGEX = /Plus de 100 Timeouts sur les 5/
-
   winston.info('Received Datadog callback', { body: request.body });
+  const jsonStringPayload =request && request.body;
 
-  if( eventTitle && eventTitle.match(IS_A_REBOOT_REGEX)) {
-    restartDynos()
+  try {
+    const payload = JSON.parse(jsonStringPayload);
+    const eventTitle = payload.title;
+    const IS_A_REBOOT_REGEX = /Plus de 100 Timeouts sur les 5/
+
+    if( eventTitle && eventTitle.match(IS_A_REBOOT_REGEX)) {
+      restartDynos()
+    }
+  } catch(error) {
+    winston.info('Received Datadog callback, but was not a JSON', { body: request.body, error });
   }
 });
 
