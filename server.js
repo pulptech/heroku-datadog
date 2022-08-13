@@ -64,6 +64,11 @@ app.post('/logs', function(request, response) {
   }
 });
 
+app.post('/monitors', function(request, response) {
+  response.sendStatus(200);
+  winston.info('Received Datadog callback',request.body)
+});
+
 winston.info('Starting the log monitoring server');
 const port = process.env.PORT || 3000;
 app.listen(port, function() {
