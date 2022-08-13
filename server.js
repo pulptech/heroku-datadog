@@ -23,6 +23,7 @@ app.use(function(req, res, next) {
     res.statusCode = 401;
     res.setHeader('WWW-Authenticate', 'Basic realm="AuthRealm"');
     res.end('Unauthorized');
+    winston.info('Received Unauthorized request', { path: req.originalUrl, user });
   } else {
     next();
   }
@@ -66,7 +67,7 @@ app.post('/logs', function(request, response) {
 
 app.post('/monitors', function(request, response) {
   response.sendStatus(200);
-  winston.info('Received Datadog callback',request.body)
+  winston.info('Received Datadog callback', { body: request.body });
 });
 
 winston.info('Starting the log monitoring server');

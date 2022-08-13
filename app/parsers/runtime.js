@@ -1,4 +1,5 @@
 const { createDatadogTags } = require('../helpers')
+const winston = require('winston');
 
 module.exports = (dogStatsD, log, hostname) => {
   const metricRegexes = {
@@ -30,10 +31,10 @@ module.exports = (dogStatsD, log, hostname) => {
           instance: instance[1].toLowerCase(),
         })
 
-        type = log.match(/host (app|heroku) ([a-zA-Z-]+)(..)? -/)
+        var type = log.match(/host (app|heroku) ([a-zA-Z-]+)(..)? -/)
         if (type) {
           type = type[2].toLowerCase()
-          console.log([ type, metric ].join('.'), value, tags)
+          winston.info(`metric: ${[ type, metric ].join('.')}, value: ${value}, tags: ${tags}`)
           dogStatsD.gauge([ type, metric ].join('.'), value, tags)
         }
       }
