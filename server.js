@@ -11,6 +11,7 @@ const Parser = require("./app/Parser");
 const { redisUrl } = require('./configuration/index');
 const TimeoutLogParserHandler = require('./app/TimeoutLogParserHandler');
 const loggerConfiguration = require('./configuration/logger');
+const { restartDynos } = require('./app/services/heroku-service')
 
 loggerConfiguration.configureLogger();
 
@@ -67,7 +68,14 @@ app.post('/logs', function(request, response) {
 
 app.post('/monitors', function(request, response) {
   response.sendStatus(200);
+  const eventTitle = request && request.body && request.body.title
+  const IS_A_REBOOT_REGEX = /Plus de 100 Timeouts sur les 5/
+
   winston.info('Received Datadog callback', { body: request.body });
+
+  if( eventTitle && eventTitle.match(IS_A_REBOOT_REGEX)) {
+    restartDynos()
+  }
 });
 
 winston.info('Starting the log monitoring server');
