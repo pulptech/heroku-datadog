@@ -43,8 +43,8 @@ app.use(function(req, res, next) {
 
 const redisSingleton = new Redis(redisUrl);
 const parser = new Parser();
-const timeoutLogParserHandler = new TimeoutLogParserHandler({ redisSingleton });
-timeoutLogParserHandler.startHandler();
+// const timeoutLogParserHandler = new TimeoutLogParserHandler({ redisSingleton });
+// timeoutLogParserHandler.startHandler();
 
 app.get('/', function(request, response) {
   response.send('OK');
@@ -60,7 +60,7 @@ app.post('/logs', function(request, response) {
       parser.parse(log, hostname);
     });
 
-     timeoutLogParserHandler.addNewLogBatch({ logArray })
+     // timeoutLogParserHandler.addNewLogBatch({ logArray })
   } else {
     winston.info('Not Logplex');
   }
