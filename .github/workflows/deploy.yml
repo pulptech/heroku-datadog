@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - feature/timeout-parser-handler
+      - sandbox
 jobs:
   push_deploy:
     runs-on: ubuntu-latest
@@ -14,7 +14,7 @@ jobs:
         run: |
           if [ "$GITHUB_REF" = "refs/heads/master" ]; then
             echo "HEROKU_APP=heroku-log-drain-metric-parser" >> $GITHUB_ENV
-          elif [ "$GITHUB_REF" = "refs/heads/feature/timeout-parser-handler" ]; then
+          elif [ "$GITHUB_REF" = "refs/heads/sandbox" ]; then
             echo "HEROKU_APP=heroku-log-parser-sandbox" >> $GITHUB_ENV
           else
             echo "Invalid branch!"
